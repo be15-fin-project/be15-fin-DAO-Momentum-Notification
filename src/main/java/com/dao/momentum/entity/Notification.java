@@ -1,9 +1,6 @@
 package com.dao.momentum.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -28,6 +25,7 @@ public class Notification {
 
     private String url;
 
+    @Enumerated(EnumType.STRING)
     private IsRead isRead;
 
     private LocalDateTime createdAt;
