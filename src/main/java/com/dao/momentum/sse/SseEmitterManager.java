@@ -46,6 +46,17 @@ public class SseEmitterManager {
         return false;
     }
 
+    public void sendHeartbeatToAll() {
+        for (Map.Entry<String, SseEmitter> entry : emitters.entrySet()) {
+            try {
+                entry.getValue().send(SseEmitter.event().name("ping").data("heartbeat"));
+            } catch (IOException e) {
+                entry.getValue().completeWithError(e);
+                emitters.remove(entry.getKey());
+            }
+        }
+    }
+
     public boolean hasConnection(String userId) {
         return emitters.containsKey(userId);
     }
