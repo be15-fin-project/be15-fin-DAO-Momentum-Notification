@@ -2,6 +2,7 @@ package com.dao.momentum.listener;
 
 import com.dao.momentum.dto.NotificationMessage;
 import com.dao.momentum.redis.RedisPublisher;
+import com.dao.momentum.service.NotificationService;
 import com.dao.momentum.sse.SseEmitterManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ public class KafkaNotificationConsumer {
 
     private final SseEmitterManager sseEmitterManager;
     private final RedisPublisher redisPublisher;
+    private final NotificationService notificationService;
 
     @KafkaListener(
             topics = "${custom.kafka.notification-topic}",
@@ -34,6 +36,8 @@ public class KafkaNotificationConsumer {
         boolean sent = sseEmitterManager.send(userId, message);
 
         if (sent) {
+            notificationService.save(message);
+            log.info("[Kafka] DB 저장 완료: 수신자={}", userId);
             ack.acknowledge();                   // Kafka 커밋
             log.info("[Kafka] 유저 {} 에게 알림 전송 및 커밋 완료", userId);
         } else {
