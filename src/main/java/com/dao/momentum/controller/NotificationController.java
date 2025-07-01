@@ -1,9 +1,11 @@
 package com.dao.momentum.controller;
 
-import com.dao.momentum.entity.Notification;
+import com.dao.momentum.dto.response.NotificationResponseDto;
+import com.dao.momentum.security.CustomUserDetails;
 import com.dao.momentum.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,16 +17,23 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    // 알림 목록 조회
-    @GetMapping("/{empId}")
-    public List<Notification> getNotifications(@PathVariable long empId) {
-        return notificationService.getUserNotifications(empId);
+    // 로그인 사용자 알림 목록 조회
+    @GetMapping
+    public List<NotificationResponseDto> getNotifications(@AuthenticationPrincipal CustomUserDetails user) {
+        return notificationService.getUserNotifications(user.getEmpId());
     }
 
-    // 알림 읽음 처리
+    // 개별 알림 읽음 처리
     @PatchMapping("/{notificationId}/read")
     public ResponseEntity<String> markAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
         return ResponseEntity.ok("알림 읽음 처리 완료");
+    }
+
+    // 로그인 사용자 전체 알림 읽음 처리
+    @PatchMapping("/read/all")
+    public ResponseEntity<String> markAllAsRead(@AuthenticationPrincipal CustomUserDetails user) {
+        notificationService.markAllAsRead(user.getEmpId());
+        return ResponseEntity.ok("전체 알림 읽음 처리 완료");
     }
 }
