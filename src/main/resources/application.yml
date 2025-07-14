@@ -46,7 +46,8 @@ spring:
 
 custom:
   kafka:
-    notification-topic: ${KAFKA_NOTIFICATION_TOPIC}
+    general-notification-topic: ${KAFKA_NOTIFICATION_TOPIC}
+    evaluation-notification-topic: ${KAFKA_EVALUATION_NOTIFICATION_TOPIC}
 
 jwt:
   secret: ${JWT_SECRET}

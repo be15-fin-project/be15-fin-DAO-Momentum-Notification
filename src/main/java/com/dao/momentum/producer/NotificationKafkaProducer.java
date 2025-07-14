@@ -14,7 +14,7 @@ public class NotificationKafkaProducer {
 
     private final KafkaTemplate<String, NotificationMessage> kafkaTemplate;
 
-    @Value("${custom.kafka.notification-topic}")
+    @Value("${custom.kafka.general-notification-topic}")
     private String topic;
 
     public void sendNotification(String userId, NotificationMessage message) {
