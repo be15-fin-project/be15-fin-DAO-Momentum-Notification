@@ -33,22 +33,24 @@ public class KafkaNotificationConsumer {
 
         log.info("[Kafka] 유저 {} 에게 도착한 알림 처리 시작", userId);
 
-        boolean sent = sseEmitterManager.send(userId, message);
+        try {
+            // 1. DB 저장 및 ID 포함한 메시지 반환
+            NotificationMessage savedMessage = notificationService.save(message);
+            log.info("[Kafka] DB 저장 완료: 수신자={}, 알림ID={}", userId, savedMessage.getId());
 
-        if (sent) {
-            notificationService.save(message);
-            log.info("[Kafka] DB 저장 완료: 수신자={}", userId);
-            ack.acknowledge();                   // Kafka 커밋
-            log.info("[Kafka] 유저 {} 에게 알림 전송 및 커밋 완료", userId);
-        } else {
-            try {
-                redisPublisher.publish(message);
-                ack.acknowledge();
-                log.warn("[Kafka] 유저 {} 는 SSE 미연결로 Redis로 fan-out만 수행 (커밋 완료)", userId);
-            } catch (Exception e) {
-                log.error("[Kafka] Redis publish 실패 - 커밋 보류: 수신자={}", userId, e);
-                // ack 생략 -> Kafka가 재전송하도록 유도
+            // 2. SSE 전송
+            boolean sent = sseEmitterManager.send(userId, savedMessage);
+            if (!sent) {
+                redisPublisher.publish(savedMessage);
+                log.warn("[Kafka] SSE 미연결 → Redis fan-out: 수신자={}", userId);
             }
+
+            // 3. 커밋
+            ack.acknowledge();
+            log.info("[Kafka] 알림 처리 및 커밋 완료: 수신자={}", userId);
+
+        } catch (Exception e) {
+            log.error("[Kafka] 알림 처리 중 오류 → 커밋 보류: 수신자={}", userId, e);
         }
     }
 
@@ -65,17 +67,21 @@ public class KafkaNotificationConsumer {
 
         log.info("[Kafka - 평가알림] 유저 {} 에게 도착한 알림 처리 시작", userId);
 
-        boolean sent = sseEmitterManager.send(userId, message);
+        try {
+            NotificationMessage savedMessage = notificationService.save(message);
+            log.info("[Kafka - 평가알림] DB 저장 완료: 수신자={}, 알림ID={}", userId, savedMessage.getId());
 
-        if (sent) {
-            notificationService.save(message);
-            log.info("[Kafka - 평가알림] DB 저장 완료: 수신자={}", userId);
+            boolean sent = sseEmitterManager.send(userId, savedMessage);
+            if (!sent) {
+                redisPublisher.publish(savedMessage);
+                log.warn("[Kafka - 평가알림] SSE 미연결 → Redis fan-out: 수신자={}", userId);
+            }
+
             ack.acknowledge();
-            log.info("[Kafka - 평가알림] 알림 전송 및 커밋 완료: 수신자={}", userId);
-        } else {
-            redisPublisher.publish(message);
-            ack.acknowledge();
-            log.warn("[Kafka - 평가알림] SSE 미연결로 Redis로 fan-out: 수신자={}", userId);
+            log.info("[Kafka - 평가알림] 알림 처리 및 커밋 완료: 수신자={}", userId);
+
+        } catch (Exception e) {
+            log.error("[Kafka - 평가알림] 알림 처리 중 오류 → 커밋 보류: 수신자={}", userId, e);
         }
     }
 }

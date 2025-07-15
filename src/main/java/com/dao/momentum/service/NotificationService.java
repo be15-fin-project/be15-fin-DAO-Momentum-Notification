@@ -20,7 +20,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public void save(NotificationMessage message) {
+    public NotificationMessage save(NotificationMessage message) {
         Notification notification = Notification.builder()
                 .empId(message.getReceiverId())
                 .approveId(message.getApproveId())
@@ -31,7 +31,11 @@ public class NotificationService {
                 .createdAt(message.getTimestamp() != null ? message.getTimestamp() : LocalDateTime.now())
                 .build();
 
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+
+        // 저장된 ID를 message 객체에 세팅하여 반환
+        message.setId(saved.getNotificationId());
+        return message;
     }
 
     @Transactional

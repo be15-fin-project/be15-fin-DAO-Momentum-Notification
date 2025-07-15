@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 public class NotificationMessage {
+    private Long id;
     private String content;
     private String type;
     private String url;
