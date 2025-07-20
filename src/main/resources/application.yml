@@ -36,7 +36,9 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
-      timeout: 6000ms
+      timeout: 6000ms  # ?? ????
+      ssl:
+        enabled: true
       lettuce:
         pool:
           max-active: 10
@@ -54,3 +56,15 @@ jwt:
   expiration: ${JWT_EXPIRATION} # 30분
   refresh-expiration : ${JWT_REFRESH_EXPIRATION} # 7일
 
+server:
+  servlet:
+    context-path: /api/backend-notification/v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
