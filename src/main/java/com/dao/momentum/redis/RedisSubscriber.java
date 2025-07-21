@@ -28,13 +28,16 @@ public class RedisSubscriber implements MessageListener {
             NotificationMessage notification = objectMapper.readValue(msgBody, NotificationMessage.class);
             String userId = String.valueOf(notification.getReceiverId());
 
-            // 1. 알림 DB 저장
-            notificationService.save(notification);
-            log.info("[RedisSubscriber] DB 저장 완료: 수신자={}", userId);
-
-            // 2. SSE 전송 시도
+            // 1. SSE 전송 시도
             boolean sent = emitterManager.send(userId, notification);
-            log.info("[RedisSubscriber] SSE 전송 {}: 수신자={}", sent ? "성공" : "실패", userId);
+
+            if (sent) {
+                // 2. 알림 DB 저장
+                notificationService.save(notification);
+                log.info("[RedisSubscriber] SSE 전송 성공 → DB 저장 완료: 수신자={}", userId);
+            } else {
+                log.warn("[RedisSubscriber] SSE 전송 실패: 수신자={}", userId);
+            }
 
         } catch (Exception e) {
             log.error("[RedisSubscriber] 알림 처리 중 오류", e);
